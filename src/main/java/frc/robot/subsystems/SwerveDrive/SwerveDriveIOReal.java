@@ -3,6 +3,7 @@ package frc.robot.subsystems.SwerveDrive;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -13,7 +14,10 @@ import frc.robot.subsystems.SwerveModule;
 import frc.robot.subsystems.Gyro.Gyro;
 import lib.BlueShift.control.SpeedAlterator;
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static frc.robot.Constants.SwerveDriveConstants.PoseControllers.*;
 import org.littletonrobotics.junction.Logger;
+
+import choreo.trajectory.SwerveSample;
 
 public class SwerveDriveIOReal implements SwerveDriveIO {
     // * Swerve modules
@@ -52,6 +56,8 @@ public class SwerveDriveIOReal implements SwerveDriveIO {
 
         // Resource reporting
         HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_Other);
+
+        rotationPID.enableContinuousInput(-Math.PI, Math.PI);
 
         //! ENCODERS ARE RESET IN EACH MODULE
         //! DO NOT RESET THEM HERE IN THE CONSTRUCTOR

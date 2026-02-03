@@ -116,6 +116,7 @@ public class RobotContainer {
 
     // Build auto chooser
     this.m_autonomousChooser = AutoBuilder.buildAutoChooser();
+
     SmartDashboard.putData("AutoChooser", m_autonomousChooser);
 
     this.lookTowards = new LookToward(m_odometry::getEstimatedPosition, new Point(4.62, 4.03));

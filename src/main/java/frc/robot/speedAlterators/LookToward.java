@@ -16,7 +16,6 @@ public class LookToward extends SpeedAlterator {
     public LookToward(Supplier<Pose2d> odoSupplier, Point target) {
         this.target = target;
         this.odoSupplier = odoSupplier;
-        rotationPID.enableContinuousInput(0, Math.PI*2);
     }
 
     @Override
