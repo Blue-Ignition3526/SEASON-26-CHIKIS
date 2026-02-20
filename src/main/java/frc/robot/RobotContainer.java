@@ -125,7 +125,7 @@ public class RobotContainer {
 
     SmartDashboard.putData("AutoChooser", m_autonomousChooser);
 
-    this.lookTowards = new LookToward(m_odometry::getEstimatedPosition, new Translation2d(4.62, 4.03));
+    this.lookTowards = new LookToward(m_odometry::getEstimatedPosition, FieldConstants.kHubPosition);
     
     // ! Dashboard testing commands
     // Chassis

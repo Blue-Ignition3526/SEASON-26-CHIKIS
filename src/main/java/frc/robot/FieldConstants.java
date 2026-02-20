@@ -9,6 +9,7 @@ public class FieldConstants {
     public static final double kFieldWidth = kApriltagFieldLayout.getFieldWidth();
     public static final double kFieldLength = kApriltagFieldLayout.getFieldLength();
     public static final Translation2d kFieldCenter = new Translation2d(kFieldLength / 2, kFieldWidth / 2);
+    public static final Translation2d kHubPosition = new Translation2d(4.62, 4.03);
 
     public static void logCalculatedPoses() {}
 }
