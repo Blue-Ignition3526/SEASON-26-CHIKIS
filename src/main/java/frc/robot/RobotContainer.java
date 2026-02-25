@@ -1,5 +1,6 @@
 package frc.robot;
 
+import com.ctre.phoenix6.Orchestra;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
@@ -11,9 +12,11 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.Constants.SwerveDriveConstants;
 import frc.robot.autos.Autos;
+import frc.robot.commands.CompoundCommands;
 import frc.robot.commands.DriveSwerve;
 import frc.robot.speedAlterators.LookToward;
 import frc.robot.subsystems.SwerveModule;
@@ -21,6 +24,7 @@ import frc.robot.subsystems.Gyro.Gyro;
 import frc.robot.subsystems.Gyro.GyroIOPigeon;
 import frc.robot.subsystems.Hopper.Hopper;
 import frc.robot.subsystems.Indexer.Indexer;
+import frc.robot.subsystems.Shooter.Shooter;
 import frc.robot.subsystems.SwerveChassis.SwerveChassis;
 import frc.robot.subsystems.SwerveChassis.SwerveChassisIOReal;
 import frc.robot.subsystems.SwerveChassis.SwerveChassisIOSim;
@@ -40,10 +44,11 @@ public class RobotContainer {
   private final CustomController OPERATOR = new CustomController(1, CustomControllerType.XBOX);
 
   // Swerve Drive
-  private final SwerveChassis m_swerveDrive;
+  private final SwerveChassis m_swerveChassis;
 
   private final Indexer indexer;
   private final Hopper hopper;
+  private final Shooter shooter;
 
   // * Odometry and Vision
   // private final LimelightOdometryCamera m_limelight3G_Back;
@@ -53,6 +58,8 @@ public class RobotContainer {
 
   private final SpeedAlterator lookTowards;
 
+  private final Orchestra orchestra;
+
   // Speed alterators
   // * Autonomous
   private final SendableChooser<Command> m_autonomousChooser;
@@ -61,7 +68,7 @@ public class RobotContainer {
     //! Subsystems
     // * Swerve Drive
     if (Robot.isReal()) {
-      this.m_swerveDrive = new SwerveChassis(new SwerveChassisIOReal(
+      this.m_swerveChassis = new SwerveChassis(new SwerveChassisIOReal(
         new SwerveModule(Constants.SwerveDriveConstants.SwerveModuleConstants.kFrontLeftOptions),
         new SwerveModule(Constants.SwerveDriveConstants.SwerveModuleConstants.kFrontRightOptions),
         new SwerveModule(Constants.SwerveDriveConstants.SwerveModuleConstants.kBackLeftOptions),
@@ -69,7 +76,7 @@ public class RobotContainer {
         new Gyro(new GyroIOPigeon(Constants.SwerveDriveConstants.kGyroDevice))
       ));
     } else {
-      this.m_swerveDrive = new SwerveChassis(new SwerveChassisIOSim());
+      this.m_swerveChassis = new SwerveChassis(new SwerveChassisIOSim());
     }
 
     this.indexer = new Indexer();
@@ -80,8 +87,8 @@ public class RobotContainer {
     this.m_limelight3G_Front = new LimelightOdometryCamera(Constants.Vision.Limelight3G_Front.kName, true, true, VisionOdometryFilters::visionFilter);
     this.m_odometry = new BlueShiftOdometry(
       Constants.SwerveDriveConstants.PhysicalModel.kDriveKinematics,
-      m_swerveDrive::getHeading,
-      m_swerveDrive::getModulePositions,
+      m_swerveChassis::getHeading,
+      m_swerveChassis::getModulePositions,
       new Pose2d(),
       m_visionPeriod,
       // m_limelight3G_Back,
@@ -89,6 +96,8 @@ public class RobotContainer {
     );
     this.m_limelight3G_Front.enable();
     this.m_odometry.startVision();
+
+    this.shooter = new Shooter(m_odometry::getEstimatedPosition);
 
     // ! Speed alterators
     // this.m_speedAlterator_turn180 = new Turn180(m_odometry::getEstimatedPosition);
@@ -108,15 +117,15 @@ public class RobotContainer {
     AutoBuilder.configure(
       m_odometry::getEstimatedPosition,
       m_odometry::resetPosition,
-      m_swerveDrive::getRobotRelativeChassisSpeeds,
-      (ChassisSpeeds speeds, DriveFeedforwards ff) -> m_swerveDrive.driveRobotRelative(speeds),
+      m_swerveChassis::getRobotRelativeChassisSpeeds,
+      (ChassisSpeeds speeds, DriveFeedforwards ff) -> m_swerveChassis.driveRobotRelative(speeds),
       new PPHolonomicDriveController(
         SwerveDriveConstants.AutonomousConstants.kTranslatePIDConstants,
         SwerveDriveConstants.AutonomousConstants.kRotatePIDConstants
       ),
       ppRobotConfig,
       () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
-      m_swerveDrive
+      m_swerveChassis
     );
 
     // Build auto chooser
@@ -135,7 +144,14 @@ public class RobotContainer {
     
     // ! Dashboard testing commands
     // Chassis
-    SmartDashboard.putData("SwerveDrive/ResetTurningEncoders", new InstantCommand(m_swerveDrive::resetTurningEncoders).ignoringDisable(true));
+    SmartDashboard.putData("SwerveDrive/ResetTurningEncoders", new InstantCommand(m_swerveChassis::resetTurningEncoders).ignoringDisable(true));
+
+    this.orchestra = new Orchestra();
+    
+    shooter.configureOrchestra(orchestra);
+    m_swerveChassis.configureOrchestra(orchestra);
+
+    orchestra.loadMusic("filepath");
 
     // ! Add controller bindings
     configureBindings();
@@ -143,9 +159,10 @@ public class RobotContainer {
 
   private void configureBindings() {
     // ! DRIVER BINDINGS
+    // https://www.gameuidatabase.com/tb_pad/index.php?templates=Controller+Scheme+1&leftTrigger=Turn+Left&rightTrigger=Turn+Right&rightBumper=Robot+Relative+%28Hold%29&leftStick=Movement&rightStickClick=Set+Zero+Heading&xButton=Outake&bButton=Shoot&aButton=Intake&col=%231A53AE%2C%231A313A%2C%23FFFFFF&startButton=Self+Destruct&leftBumper=Auto+Aim
     // * Swerve drive binding
-    this.m_swerveDrive.setDefaultCommand(new DriveSwerve(
-        m_swerveDrive,
+    this.m_swerveChassis.setDefaultCommand(new DriveSwerve(
+        m_swerveChassis,
         () -> -DRIVER.getLeftY(),
         () -> -DRIVER.getLeftX(),
         () -> DRIVER.getLeftTrigger() - DRIVER.getRightTrigger(),
@@ -155,9 +172,13 @@ public class RobotContainer {
 
     // * Reset heading with right stick button
     //TODO: think of a better button to bind this to
-    this.DRIVER.rightStickButton().onTrue(this.m_swerveDrive.zeroHeadingCommand());
+    this.DRIVER.rightStickButton().onTrue(this.m_swerveChassis.zeroHeadingCommand());
 
-    DRIVER.rightButton().onTrue(m_swerveDrive.enableSpeedAlteratorCommand(lookTowards)).onFalse(m_swerveDrive.disableSpeedAlteratorCommand());
+    DRIVER.rightButton().onTrue(m_swerveChassis.enableSpeedAlteratorCommand(lookTowards)).onFalse(m_swerveChassis.disableSpeedAlteratorCommand());
+    DRIVER.leftButton().onTrue(CompoundCommands.completeShootCommand(shooter, indexer, hopper, m_swerveChassis));
+
+    // Self Destruct Command
+    DRIVER.startButton().onTrue(Commands.runOnce(orchestra::play).ignoringDisable(true));
   }
 
   public Command getAutonomousCommand() {
