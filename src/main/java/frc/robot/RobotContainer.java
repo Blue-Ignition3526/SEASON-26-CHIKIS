@@ -26,6 +26,7 @@ import frc.robot.subsystems.Gyro.GyroIOPigeon;
 import frc.robot.subsystems.Hopper.Hopper;
 import frc.robot.subsystems.Indexer.Indexer;
 import frc.robot.subsystems.Intake.Intake;
+import frc.robot.subsystems.IntakePivot.IntakePivot;
 import frc.robot.subsystems.Shooter.Shooter;
 import frc.robot.subsystems.Shooter.ShooterConstants;
 import frc.robot.subsystems.SwerveChassis.SwerveChassis;
@@ -52,6 +53,7 @@ public class RobotContainer {
   private final Indexer indexer;
   private final Hopper hopper;
   private final Intake intake;
+  private final IntakePivot intakePivot;
   private final Shooter shooter;
 
   // * Odometry and Vision
@@ -86,6 +88,7 @@ public class RobotContainer {
     this.indexer = new Indexer();
     this.hopper = new Hopper();
     this.intake = new Intake();
+    this.intakePivot = new IntakePivot();
 
     // ! Odometry and Vision
     // this.m_limelight3G_Back = new LimelightOdometryCamera(Constants.Vision.Limelight3G_Back.kName, true, true, VisionOdometryFilters::visionFilter);
@@ -182,10 +185,10 @@ public class RobotContainer {
     DRIVER.leftBumper().onTrue(m_swerveChassis.enableSpeedAlteratorCommand(lookTowards)).onFalse(m_swerveChassis.disableSpeedAlteratorCommand());
     DRIVER.rightButton().onTrue(CompoundCommands.completeShootCommand(shooter, indexer, hopper, m_swerveChassis));
     DRIVER.bottomButton().onTrue(new ParallelCommandGroup(
-      // intake.intakeCommand(),
-      // intakePivot.setDown()
+      intake.setInCommand()//,
+      // intakePivot.register();
     ));
-    // DRIVER.topButton().onTrue(intake.outakeCommand());
+    DRIVER.topButton().onTrue(intake.setOutCommand());
 
     // Self Destruct Command
     DRIVER.startButton().onTrue(Commands.runOnce(orchestra::play).ignoringDisable(true));
