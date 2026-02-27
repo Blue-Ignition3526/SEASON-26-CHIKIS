@@ -80,11 +80,11 @@ public class IntakePivot extends SubsystemBase {
   }
 
   public Command setUpCommand() {
-    return runOnce(() -> this.setSetpoint(kPosUp));
+    return this.setSetpointCommand(kPosUp);
   }
 
   public Command setDownCommand() {
-    return runOnce(() -> this.setSetpoint(kPosDown));
+    return this.setSetpointCommand(kPosDown);
   }
 
   public Command stopCommand() {
