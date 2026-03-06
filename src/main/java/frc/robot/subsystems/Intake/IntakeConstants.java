@@ -5,6 +5,6 @@ public class IntakeConstants {
 
     public static final int kCurrentLimit = 40;
     // * Absolute guess
-    public static final int kInVoltage = 5;
-    public static final int kOutVoltage = 5;
+    public static final int kInVoltage = 7;
+    public static final int kOutVoltage = -5;
 }

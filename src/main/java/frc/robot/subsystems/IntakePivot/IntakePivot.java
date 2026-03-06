@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import lib.BlueShift.math.BlueMathUtils;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Rotations;
 import static frc.robot.subsystems.IntakePivot.IntakePivotConstants.*;
 
@@ -29,7 +30,7 @@ public class IntakePivot extends SubsystemBase {
   private final SparkFlex motor;
   private final CANcoder encoder;
 
-  private Angle setpoint;
+  private Angle setpoint = kPosUp;
   private boolean enabled = true;
 
   private double PIDOutput;
@@ -43,11 +44,11 @@ public class IntakePivot extends SubsystemBase {
     config
       .smartCurrentLimit(kCurrentLimit)
       .idleMode(IdleMode.kBrake)
-      .inverted(false);
+      .inverted(true);
     config.absoluteEncoder
       .velocityConversionFactor(kConversionFactor)
       .positionConversionFactor(kConversionFactor);
-
+  
     this.motor.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
   }
 
@@ -55,7 +56,7 @@ public class IntakePivot extends SubsystemBase {
     return encoder.getPosition().getValue();
   }
 
-  private void set(double voltage) {
+  private void setVolts(double voltage) {
     this.motor.setVoltage(voltage);
   }
 
@@ -98,16 +99,19 @@ public class IntakePivot extends SubsystemBase {
   public void periodic() {
     shouldRun = this.enabled && Math.abs(getAngle().in(Rotations) - this.setpoint.in(Rotations)) > kEpsilon.in(Rotations);
 
-    PIDOutput = 0;
-    if (shouldRun) PIDOutput = BlueMathUtils.clamp(kPID.calculate(getAngle().in(Rotations), this.setpoint.in(Rotations)), -kLimit, kLimit);
+    PIDOutput = BlueMathUtils.clamp(kPID.calculate(getAngle().in(Rotations), this.setpoint.in(Rotations)), -kLimit, kLimit);
 
     // ! Check PID output before uncommenting
-    //if (shouldRun) set(PIDOutput);
+    if (shouldRun) setVolts(PIDOutput);
+
+    // motor.set(0.05);
 
     Logger.recordOutput("pivot/angle", getAngle());
     Logger.recordOutput("pivot/setpoint", setpoint);
-    Logger.recordOutput("pibot/enabled", enabled);
+    Logger.recordOutput("pivot/enabled", enabled);
+    Logger.recordOutput("pivot/shouldRun", shouldRun);
     Logger.recordOutput("pivot/PIDOutput", PIDOutput);
+    Logger.recordOutput("pivot/output", motor.getAppliedOutput()*motor.getBusVoltage());
     SmartDashboard.putData("pivot/PID", kPID);
   }
 }

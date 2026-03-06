@@ -52,12 +52,25 @@ public class Hopper extends SubsystemBase {
     upperSet(kUpperationVoltage);
   }
 
+  public void reverse() {
+    hopperSet(-kHopperationVoltage);
+    upperSet(-kUpperationVoltage);
+  }
+
   public void stop() {
     hopperMotor.stopMotor();
     upperMotor.stopMotor();
   }
 
+  public Command stopCommand() {
+    return runOnce(this::stop);
+  }
+
   public Command hopperationCommand() {
     return runEnd(this::hopperate, this::stop);
+  }
+
+  public Command reverseCommand() {
+    return runEnd(this::reverse, this::stop);
   }
 }

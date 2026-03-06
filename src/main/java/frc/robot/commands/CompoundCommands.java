@@ -11,8 +11,36 @@ public class CompoundCommands {
   public static Command completeShootCommand(Shooter shooter, Indexer indexer, Hopper hopper, SwerveChassis swerve) {
     return
       shooter.shootCommand()
-      .alongWith(hopper.hopperationCommand())
-      .alongWith(indexer.conditionalIndex(shooter::ready))
-      .alongWith(Commands.runOnce(swerve::xFormation, swerve));
+        .alongWith(
+      hopper.hopperationCommand())
+        .alongWith(
+      indexer.conditionalIndex(shooter::ready))
+        .alongWith(
+      Commands.runOnce(swerve::xFormation, swerve))
+
+      .finallyDo(
+        () -> {
+          shooter.stop();
+          hopper.stop();
+          indexer.stop();
+        }
+      );
+  }
+
+  public static Command manualShootCommand(Shooter shooter, Indexer indexer, Hopper hopper, double velocity) {
+    return 
+      shooter.setCommand(velocity)
+        .alongWith(
+      hopper.hopperationCommand())
+        .alongWith(
+      indexer.conditionalIndex(shooter::ready))
+
+      .finallyDo(
+        () -> {
+          shooter.stop();
+          hopper.stop();
+          indexer.stop();
+        }
+      );
   }
 }

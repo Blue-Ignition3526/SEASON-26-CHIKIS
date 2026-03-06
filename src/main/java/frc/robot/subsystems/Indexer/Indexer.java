@@ -18,14 +18,14 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Indexer extends SubsystemBase {
   private final SparkFlex topMotor;
-  private final SparkMax lowerMotor;
+  // private final SparkMax lowerMotor;
 
   public Indexer() {
     this.topMotor = new SparkFlex(kUpperMotorID, MotorType.kBrushless);
-    this.lowerMotor = new SparkMax(kLowerMotorID, MotorType.kBrushless);
+    // this.lowerMotor = new SparkMax(kLowerMotorID, MotorType.kBrushless);
 
     SparkFlexConfig upperConfig = new SparkFlexConfig();
-    SparkMaxConfig lowerConfig = new SparkMaxConfig();
+    // SparkMaxConfig lowerConfig = new SparkMaxConfig();
     
     upperConfig
             .smartCurrentLimit(kUpperCurrentLimit)
@@ -33,29 +33,29 @@ public class Indexer extends SubsystemBase {
             .openLoopRampRate(kUpperRampRate)
             .inverted(false);
 
-    lowerConfig
-            .smartCurrentLimit(kLowerCurrentLimit)
-            .idleMode(IdleMode.kBrake)
-            .openLoopRampRate(kLowerRampRate)
-            .inverted(true);
+    // lowerConfig
+    //         .smartCurrentLimit(kLowerCurrentLimit)
+    //         .idleMode(IdleMode.kBrake)
+    //         .openLoopRampRate(kLowerRampRate)
+    //         .inverted(true);
 
     this.topMotor.configure(upperConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
-    this.lowerMotor.configure(lowerConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+    // this.lowerMotor.configure(lowerConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
   }
 
   public void index() {
     topMotor.setVoltage(kTopIndexVoltage);
-    lowerMotor.setVoltage(kBottomIndexVoltaje);
+    // lowerMotor.setVoltage(kBottomIndexVoltaje);
   }
 
   public void eject() {
     topMotor.setVoltage(kTopEjectVoltage);
-    lowerMotor.setVoltage(kBottomEjectVoltaje);
+    // lowerMotor.setVoltage(kBottomEjectVoltaje);
   }
 
   public void stop() {
     topMotor.stopMotor();
-    lowerMotor.stopMotor();
+    // lowerMotor.stopMotor();
   }
 
   public Command indexCommand() {

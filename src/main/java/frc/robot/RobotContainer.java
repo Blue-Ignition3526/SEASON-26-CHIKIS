@@ -14,9 +14,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import frc.robot.Constants.SwerveDriveConstants;
-import frc.robot.autos.Autos;
 import frc.robot.commands.CompoundCommands;
 import frc.robot.commands.DriveSwerve;
 import frc.robot.speedAlterators.LookToward;
@@ -41,11 +39,11 @@ import lib.BlueShift.control.CustomController.CustomControllerType;
 import lib.BlueShift.odometry.swerve.BlueShiftOdometry;
 import lib.BlueShift.odometry.vision.camera.LimelightOdometryCamera;
 import lib.BlueShift.odometry.vision.camera.VisionOdometryFilters;
-
+//elooooo
 public class RobotContainer {
-  // * Controllers
-  private final CustomController DRIVER = new CustomController(0, Robot.isReal() ? CustomControllerType.XBOX : CustomControllerType.PS5);
-  private final CustomController OPERATOR = new CustomController(1, CustomControllerType.XBOX);
+  // * Controller
+  private final CustomController DRIVER = new CustomController(0, CustomControllerType.XBOX);
+  private final CustomController OPERATOR = new CustomController(1, CustomControllerType.PS5);
 
   // Swerve Drive
   private final SwerveChassis m_swerveChassis;
@@ -152,7 +150,7 @@ public class RobotContainer {
     shooter.configureOrchestra(orchestra);
     m_swerveChassis.configureOrchestra(orchestra);
 
-    orchestra.loadMusic("filepath");
+    orchestra.loadMusic("megalovania");
 
     // ! Add controller bindings
     configureBindings();
@@ -171,32 +169,42 @@ public class RobotContainer {
       )
     );
 
+    shooter.setDefaultCommand(shooter.standbyCommand());
+
     // * Reset heading with right stick button
     //TODO: think of a better button to bind this to
     this.DRIVER.rightStickButton().onTrue(this.m_swerveChassis.zeroHeadingCommand());
 
     DRIVER.leftBumper().onTrue(m_swerveChassis.enableSpeedAlteratorCommand(lookTowards)).onFalse(m_swerveChassis.disableSpeedAlteratorCommand());
-    DRIVER.rightButton().onTrue(CompoundCommands.completeShootCommand(shooter, indexer, hopper, m_swerveChassis));
-    DRIVER.bottomButton().onTrue(new ParallelCommandGroup(
-      intake.setInCommand()//,
-      // intakePivot.register();
-    ));
-    DRIVER.topButton().onTrue(intake.setOutCommand());
+    DRIVER.rightButton().whileTrue(CompoundCommands.completeShootCommand(shooter, indexer, hopper, m_swerveChassis));
+    DRIVER.bottomButton().whileTrue(intake.setInCommand());
+    DRIVER.topButton().whileTrue(intake.setOutCommand());
 
     // Self Destruct Command
     DRIVER.startButton().onTrue(Commands.runOnce(orchestra::play).ignoringDisable(true));
 
     // ! OPERATOR
-    // OPERATOR.topButton().onTrue(CompoundCommands.manualShootCommand(shooter, indexer, hopper, ShooterConstants.manual1));
-    // OPERATOR.rightButton().onTrue(CompoundCommands.manualShootCommand(shooter, indexer, hopper, ShooterConstants.manual2));
-    // OPERATOR.leftButton().onTrue(CompoundCommands.manualShootCommand(shooter, indexer, hopper, ShooterConstants.manual3));
-    // OPERATOR.bottomButton().onTrue(CompoundCommands.manualShootCommand(shooter, indexer, hopper, ShooterConstants.manual4));
+    OPERATOR.topButton().whileTrue(CompoundCommands.manualShootCommand(shooter, indexer, hopper, ShooterConstants.manual1));
+    // OPERATOR.topButton().whileTrue(shooter.setCommand(20));
+    OPERATOR.rightButton().whileTrue(CompoundCommands.manualShootCommand(shooter, indexer, hopper, ShooterConstants.manual2));
+    OPERATOR.leftButton().whileTrue(CompoundCommands.manualShootCommand(shooter, indexer, hopper, ShooterConstants.manual3));
+    OPERATOR.bottomButton().whileTrue(CompoundCommands.manualShootCommand(shooter, indexer, hopper, ShooterConstants.manual4));
 
     
-    // OPERATOR.topButton().onTrue(intakePivot.setPositionCommand(IntakeConstants.manual1));
-    // OPERATOR.rightButton().onTrue(intakePivot.setPositionCommand(IntakeConstants.manual2));
-    // OPERATOR.leftButton().onTrue(intakePivot.setPositionCommand(IntakeConstants.manual3));
-    // OPERATOR.bottomButton().onTrue(intakePivot.setPositionCommand(IntakeConstants.manual4));
+    // OPERATOR.topButton().onTrue(intakePivot.setSetpointCommand(IntakePivotConstants.kManualPos0));
+    // OPERATOR.rightButton().onTrue(intakePivot.setSetpointCommand(IntakePivotConstants.kManualPos1));
+    // OPERATOR.leftButton().onTrue(intakePivot.setSetpointCommand(IntakePivotConstants.kManualPos2));
+    // OPERATOR.bottomButton().onTrue(intakePivot.setSetpointCommand(IntakePivotConstants.kManualPos3));
+
+    OPERATOR.leftBumper().onTrue(intakePivot.setDownCommand());
+    OPERATOR.rightBumper().onTrue(intakePivot.setUpCommand());
+
+    OPERATOR.leftTrigger().whileTrue(intake.setInCommand());
+    OPERATOR.rightTrigger().whileTrue(intake.setOutCommand());
+
+    OPERATOR.povLeft().whileTrue(indexer.indexCommand());
+    OPERATOR.povRight().whileTrue(hopper.hopperationCommand());
+    OPERATOR.povUp().whileTrue(indexer.ejectCommand().alongWith(hopper.reverseCommand()));
   }
 
   public Command getAutonomousCommand() {

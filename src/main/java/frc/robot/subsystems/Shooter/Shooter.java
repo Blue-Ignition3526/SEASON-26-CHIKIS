@@ -44,8 +44,8 @@ public class Shooter extends SubsystemBase {
   private boolean automatic = true;
 
   public Shooter(Supplier<Pose2d> poseSupplier) {
-    leftMotor = new TalonFX(kLeftMotorId);
-    s_rightMotor = new TalonFX(kRightMotorID);
+    leftMotor = new TalonFX(kLeftMotorId, "*");
+    s_rightMotor = new TalonFX(kRightMotorID, "*");
 
     TalonFXConfiguration leftMotorConfig = new TalonFXConfiguration()
     .withMotorOutput(new MotorOutputConfigs()
@@ -78,7 +78,16 @@ public class Shooter extends SubsystemBase {
   }
 
   public void set(double rps) {
+    setpoint = rps;
     leftMotor.setControl(controlRequest.withVelocity(rps));
+  }
+
+  public void standby() {
+    set(kIdleSpeed);
+  }
+
+  public Command standbyCommand() {
+    return run(this::standby);
   }
 
   public void stop() {
@@ -173,12 +182,14 @@ public class Shooter extends SubsystemBase {
   @Override
   public void periodic() {
     if(automatic) {
-      setpoint = getSetpointWithMap(poseSuppler.get());
+      // setpoint = getSetpointWithMap(poseSuppler.get());
       // Check setpoint gives expected values, convert if needed.
       // set(setpoint);
     }
     
+    Logger.recordOutput("Shooter/isREady", ready());
     Logger.recordOutput("Shooter/Speed", getRPS());
+    Logger.recordOutput("Shooter/output", leftMotor.get());
     Logger.recordOutput("Shooter/setpoint", setpoint);
   }
 }
