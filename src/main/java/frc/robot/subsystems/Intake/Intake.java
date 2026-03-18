@@ -26,7 +26,7 @@ public class Intake extends SubsystemBase {
     config
       .smartCurrentLimit(kCurrentLimit)
       .idleMode(IdleMode.kCoast)
-      .inverted(true);
+      .inverted(false);
 
     this.motor.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
   }
@@ -51,6 +51,10 @@ public class Intake extends SubsystemBase {
   // Commands
   public Command setInCommand() {
     return runEnd(this::setIn, this::stop);
+  }
+
+  public Command setInCommandForAuto() {
+    return run(this::setIn);
   }
 
   public Command setOutCommand() {

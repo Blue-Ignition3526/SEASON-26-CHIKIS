@@ -1,0 +1,43 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "named",
+          "data": {
+            "name": "INTAKE_DOWN"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "INTAKE_START"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Left-center_long-shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "INTAKE_STOP"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "SHOOT"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}

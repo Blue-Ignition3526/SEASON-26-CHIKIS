@@ -12,16 +12,14 @@ public class IntakePivotConstants {
 
     public static final int kCurrentLimit = 40;
 
-    public static final double kConversionFactor = 1.0/25.0;
-
     // ! Values not set
     // Limits
-    public static final Angle kMinAngle = Rotations.of(-0.12);
-    public static final Angle kMaxAngle = Rotations.of(0.23);
+    public static final Angle kMinAngle = Rotations.of(0);
+    public static final Angle kMaxAngle = Rotations.of(0.4);
 
     // Positions
-    public static final Angle kPosDown = Rotations.of(-0.1);
-    public static final Angle kPosUp = Rotations.of(0.2);
+    public static final Angle kPosDown = Rotations.of(0.01);
+    public static final Angle kPosUp = Rotations.of(0.42);
 
     public static final Angle kManualPos0 = Degrees.of(0);
     public static final Angle kManualPos1 = Degrees.of(0);
@@ -29,7 +27,7 @@ public class IntakePivotConstants {
     public static final Angle kManualPos3 = Degrees.of(0);
 
     // PID
-    public static final PIDController kPID = new PIDController(8, 0, 0);
-    public static final Angle kEpsilon = Degrees.of(1);
+    public static final PIDController kPID = new PIDController(25, 0, 0);
+    public static final Angle kEpsilon = Degrees.of(25);
     public static final double kLimit = 11;
 }

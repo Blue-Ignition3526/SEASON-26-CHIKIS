@@ -10,9 +10,14 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import frc.robot.Constants;
+import frc.robot.Constants.SwerveDriveConstants.PhysicalModel;
 import frc.robot.subsystems.SwerveModule;
 import frc.robot.subsystems.Gyro.Gyro;
+import lib.Elastic;
 import lib.BlueShift.control.SpeedAlterator;
+import lib.Elastic.Notification;
+import lib.Elastic.Notification.NotificationLevel;
+
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static frc.robot.Constants.SwerveDriveConstants.PoseControllers.*;
 import org.littletonrobotics.junction.Logger;
@@ -148,22 +153,24 @@ public class SwerveChassisIOReal implements SwerveChassisIO {
      * @param rotSpeed
      */
     public void drive(ChassisSpeeds speeds) {
-        Logger.recordOutput("SwerveDrive/SpeedsAltered", speeds);
+        Logger.recordOutput("SwerveDrive/SpeedsUnaltered", speeds);
+        Logger.recordOutput("SwerveDrive/hasAlterator", speedAlterator != null);
         if (speedAlterator != null) {
             this.speeds = speedAlterator.alterSpeed(speeds, drivingRobotRelative);
         } else {
             this.speeds = speeds;
         }
-        Logger.recordOutput("SwerveDrive/SpeedsUnaltered", speeds);
+        Logger.recordOutput("SwerveDrive/SpeedsAltered", this.speeds);
 
         // Convert speeds to module states
-        SwerveModuleState[] m_moduleStates = Constants.SwerveDriveConstants.PhysicalModel.kDriveKinematics.toSwerveModuleStates(this.speeds);
+        SwerveModuleState[] m_moduleStates = PhysicalModel.kDriveKinematics.toSwerveModuleStates(this.speeds);
 
         // Set the target states for the modules
         this.setModuleStates(m_moduleStates);
     }
 
     public void enableSpeedAlterator(SpeedAlterator alterator) {
+        Elastic.sendNotification(new Notification(NotificationLevel.INFO, "Enabled", alterator == null ? "null" : "not null"));
         if (this.speedAlterator != alterator) alterator.onEnable();
         if (this.speedAlterator != null) this.speedAlterator.onDisable();
         this.speedAlterator = alterator;

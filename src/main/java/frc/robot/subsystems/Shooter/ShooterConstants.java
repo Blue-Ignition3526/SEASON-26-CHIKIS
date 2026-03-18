@@ -13,14 +13,6 @@ public class ShooterConstants {
   public static final int kCurrentLimit = 40;
   public static final double kRampRate = 0.2;
 
-  public static final double kS = 0.0;
-  public static final double kV = 0.125;
-  public static final double kA = 0.0;
-  public static final double kP = 0.0;
-  public static final double kI = 0.0;
-  public static final double kD = 0.0;
-
-  // TODO: set manual speeds (RPS)
   public static final double manual1 = 30;
   public static final double manual2 = 48;
   public static final double manual3 = 62;
@@ -28,12 +20,45 @@ public class ShooterConstants {
 
   public static final double kIdleSpeed = manual1;
 
+  public static final class MagicShooterConstants {
+    public static final double kS = 0.0;
+    public static final double kV = 0.12;
+    public static final double kA = 0.0;
+    public static final double kP = 0.05;
+    public static final double kI = 0.0;
+    public static final double kD = 0.0;
+
+    public static final double kEpsilon = 2;
+  }
+
+
   // TODO: calibrate automatic speeds (RPS)
   public static final TreeMap<Distance, Double> kSpeedsMap = new TreeMap<>();
   static {
-    kSpeedsMap.put(Meters.of(0), 60.0);
-    kSpeedsMap.put(Meters.of(10), 83.3);
+    kSpeedsMap.put(Meters.of(1.55), 44.0);
+    kSpeedsMap.put(Meters.of(2.00), 45.0);
+    kSpeedsMap.put(Meters.of(2.5), 48.5);
+    kSpeedsMap.put(Meters.of(3), 62.0);
   }
 
-  public static final double kEpsilon = 7;
+
+  // This shooter switches control type, from bang bang to currentTorque
+  // Using bang bang ensures fastest acceleration to setpoint
+  // Using Current ensures consistent ball exit velocity
+  public static final class CoolShooterConstants {
+    public enum ShooterState {
+      SPINUP, // Bang-Bang
+      READY, // Bang-Bang
+      FUEL_CONTACT, // Torque
+      RECOVERY // Bang-Bang
+    }
+
+    //! This decides when to switch from Torque control back to bang bang
+    public static final double kEpsilon = 5;
+
+    //! This value needs to be found experimentaly
+    //! Can be the value of ball passing in normal mode + sefety margin
+    //? Change this to idle - peak to get the ball current, and then scale idle depending on setpoint
+    public static final double kShootCurrent = 37;
+  }
 }

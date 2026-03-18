@@ -16,11 +16,11 @@ import static frc.robot.subsystems.Hopper.HopperConstants.*;
 
 public class Hopper extends SubsystemBase {
   private final SparkFlex hopperMotor;
-  private final SparkMax upperMotor;
+  // private final SparkMax upperMotor;
 
   public Hopper() {
     this.hopperMotor = new SparkFlex(kHopperMotorID, MotorType.kBrushless);
-    this.upperMotor = new SparkMax(kUpperMotorID, MotorType.kBrushless);
+    // // this.upperMotor = new SparkMax(kUpperMotorID, MotorType.kBrushless);
 
     SparkFlexConfig hopperConfig = new SparkFlexConfig();
     SparkMaxConfig upperConfig = new SparkMaxConfig();
@@ -36,7 +36,7 @@ public class Hopper extends SubsystemBase {
       .inverted(false);
 
     hopperMotor.configure(hopperConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
-    upperMotor.configure(upperConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+    // upperMotor.configure(upperConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
   }
 
   public void hopperSet(double voltage) {
@@ -44,7 +44,7 @@ public class Hopper extends SubsystemBase {
   }
 
   public void upperSet(double voltage) {
-    upperMotor.setVoltage(voltage);
+    // upperMotor.setVoltage(voltage);
   }
 
   public void hopperate() {
@@ -59,7 +59,7 @@ public class Hopper extends SubsystemBase {
 
   public void stop() {
     hopperMotor.stopMotor();
-    upperMotor.stopMotor();
+    // upperMotor.stopMotor();
   }
 
   public Command stopCommand() {
@@ -68,6 +68,10 @@ public class Hopper extends SubsystemBase {
 
   public Command hopperationCommand() {
     return runEnd(this::hopperate, this::stop);
+  }
+
+  public Command hopperationCommandForAuto() {
+    return run(this::hopperate);
   }
 
   public Command reverseCommand() {

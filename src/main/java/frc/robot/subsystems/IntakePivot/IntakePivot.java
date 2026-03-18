@@ -16,9 +16,9 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import lib.BlueShift.math.BlueMathUtils;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Rotations;
 import static frc.robot.subsystems.IntakePivot.IntakePivotConstants.*;
 
@@ -45,9 +45,6 @@ public class IntakePivot extends SubsystemBase {
       .smartCurrentLimit(kCurrentLimit)
       .idleMode(IdleMode.kBrake)
       .inverted(true);
-    config.absoluteEncoder
-      .velocityConversionFactor(kConversionFactor)
-      .positionConversionFactor(kConversionFactor);
   
     this.motor.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
   }
@@ -87,29 +84,41 @@ public class IntakePivot extends SubsystemBase {
     return this.setSetpointCommand(kPosUp);
   }
 
+  public Command setUpWaitCommand() {
+    return this.setSetpointCommand(kPosUp).alongWith(new WaitUntilCommand(this::atSetpoint));
+  }
+
   public Command setDownCommand() {
     return this.setSetpointCommand(kPosDown);
+  }
+
+
+  public Command setDownWaitCommand() {
+    return this.setSetpointCommand(kPosDown).alongWith(new WaitUntilCommand(this::atSetpoint));
   }
 
   public Command stopCommand() {
     return runOnce(this::stop);
   }
 
+  public boolean atSetpoint() {
+    return Math.abs(getAngle().in(Rotations) - this.setpoint.in(Rotations)) < kEpsilon.in(Rotations);
+  }
+
   @Override
   public void periodic() {
-    shouldRun = this.enabled && Math.abs(getAngle().in(Rotations) - this.setpoint.in(Rotations)) > kEpsilon.in(Rotations);
+    shouldRun = this.enabled && !atSetpoint();
 
     PIDOutput = BlueMathUtils.clamp(kPID.calculate(getAngle().in(Rotations), this.setpoint.in(Rotations)), -kLimit, kLimit);
 
-    // ! Check PID output before uncommenting
     if (shouldRun) setVolts(PIDOutput);
-
-    // motor.set(0.05);
+    else stop();
 
     Logger.recordOutput("pivot/angle", getAngle());
     Logger.recordOutput("pivot/setpoint", setpoint);
     Logger.recordOutput("pivot/enabled", enabled);
     Logger.recordOutput("pivot/shouldRun", shouldRun);
+    Logger.recordOutput("pivot/atSetpoiny", atSetpoint());
     Logger.recordOutput("pivot/PIDOutput", PIDOutput);
     Logger.recordOutput("pivot/output", motor.getAppliedOutput()*motor.getBusVoltage());
     SmartDashboard.putData("pivot/PID", kPID);

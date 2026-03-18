@@ -6,6 +6,6 @@ public class HopperConstants {
   
   public static final int kCurrentLimit = 30;
   
-  public static final double kHopperationVoltage = 9; 
+  public static final double kHopperationVoltage = 11; 
   public static final double kUpperationVoltage = 5;
 }
