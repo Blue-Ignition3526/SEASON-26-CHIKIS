@@ -8,7 +8,6 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import lib.BlueShift.control.SpeedAlterator;
 
@@ -51,6 +50,11 @@ public class SwerveChassis extends SubsystemBase implements SwerveChassisIO {
 
   public void drive(ChassisSpeeds speeds) {
     io.drive(speeds);
+  }
+
+
+  public void setDefaultAlterator(SpeedAlterator alterator) {
+    io.setDefaultAlterator(alterator);
   }
 
   public void enableSpeedAlterator(SpeedAlterator alterator) {

@@ -20,6 +20,8 @@ import frc.robot.Constants.SwerveDriveConstants;
 import frc.robot.commands.CompoundCommands;
 import frc.robot.commands.DriveSwerve;
 import frc.robot.commands.ResetHeadingWithVision;
+import frc.robot.speedAlterators.ByHeading;
+import frc.robot.speedAlterators.KeepHeading;
 import frc.robot.speedAlterators.LookToward;
 import frc.robot.speedAlterators.Shake;
 import frc.robot.subsystems.SwerveModule;
@@ -35,20 +37,18 @@ import frc.robot.subsystems.Shooter.ShooterConstants;
 import frc.robot.subsystems.Shooter.TrajectoryGetter;
 import frc.robot.subsystems.SwerveChassis.SwerveChassis;
 import frc.robot.subsystems.SwerveChassis.SwerveChassisIOReal;
-import frc.robot.subsystems.SwerveChassis.SwerveChassisIOSim;
 import lib.Elastic;
 import lib.Elastic.Notification;
 import lib.Elastic.Notification.NotificationLevel;
 import lib.BlueShift.control.CustomController;
-import lib.BlueShift.control.SpeedAlterator;
 import lib.BlueShift.control.CustomController.CustomControllerType;
 import lib.BlueShift.odometry.swerve.BlueShiftOdometry;
 import lib.BlueShift.odometry.vision.camera.LimelightOdometryCamera;
 import lib.BlueShift.odometry.vision.camera.VisionOdometryFilters;
-//elooooo
+
 public class RobotContainer {
   // * Controller
-  private final CustomController DRIVER = new CustomController(0, CustomControllerType.PS5, 0.09, 1.5);
+  private final CustomController DRIVER = new CustomController(0, CustomControllerType.PS5, 0.09, 1.5, 2.0);
   private final CustomController OPERATOR = new CustomController(1, CustomControllerType.PS5);
 
   // Swerve Drive
@@ -67,8 +67,10 @@ public class RobotContainer {
   private final BlueShiftOdometry m_odometry;
   private final double m_visionPeriod = 0.02;
 
-  private final SpeedAlterator lookTowards;
+  private final LookToward lookTowards;
   private final Shake shake;
+  private final ByHeading trenchPass;
+  private final KeepHeading keepHeading;
 
   private final Orchestra orchestra;
 
@@ -79,19 +81,14 @@ public class RobotContainer {
   public RobotContainer() {
     //! Subsystems
     // * Swerve Drive
-    if (Robot.isReal()) {
-      this.m_gyro = new Gyro(new GyroIOPigeon(Constants.SwerveDriveConstants.kGyroDevice));
-      this.m_swerveChassis = new SwerveChassis(new SwerveChassisIOReal(
-        new SwerveModule(Constants.SwerveDriveConstants.SwerveModuleConstants.kFrontLeftOptions),
-        new SwerveModule(Constants.SwerveDriveConstants.SwerveModuleConstants.kFrontRightOptions),
-        new SwerveModule(Constants.SwerveDriveConstants.SwerveModuleConstants.kBackLeftOptions),
-        new SwerveModule(Constants.SwerveDriveConstants.SwerveModuleConstants.kBackRightOptions),
-        m_gyro
-      ));
-    } else {
-      this.m_gyro = new Gyro(null); // TODO: wtf
-      this.m_swerveChassis = new SwerveChassis(new SwerveChassisIOSim());
-    }
+    this.m_gyro = new Gyro(new GyroIOPigeon(Constants.SwerveDriveConstants.kGyroDevice));
+    this.m_swerveChassis = new SwerveChassis(new SwerveChassisIOReal(
+      new SwerveModule(Constants.SwerveDriveConstants.SwerveModuleConstants.kFrontLeftOptions),
+      new SwerveModule(Constants.SwerveDriveConstants.SwerveModuleConstants.kFrontRightOptions),
+      new SwerveModule(Constants.SwerveDriveConstants.SwerveModuleConstants.kBackLeftOptions),
+      new SwerveModule(Constants.SwerveDriveConstants.SwerveModuleConstants.kBackRightOptions),
+      m_gyro
+    ));
 
     this.indexer = new Indexer();
     this.hopper = new Hopper();
@@ -117,7 +114,10 @@ public class RobotContainer {
 
     this.lookTowards = new LookToward(m_odometry::getEstimatedPosition, TrajectoryGetter.hubPos());
     this.shake = new Shake(Rotation2d.fromDegrees(1), m_swerveChassis::getHeading);
+    this.trenchPass = new ByHeading(() -> m_swerveChassis.getHeading().getRadians(), () -> 0.0);
+    this.keepHeading = new KeepHeading(m_odometry::getEstimatedPosition, 0.05);
 
+    this.m_swerveChassis.setDefaultAlterator(keepHeading);
 
     NamedCommands.registerCommand("SHOOT", CompoundCommands.autoShootCommand(shooter, m_odometry::getEstimatedPosition, indexer, hopper, intake, intakePivot, m_swerveChassis));
     NamedCommands.registerCommand("INTAKE_DOWN", intakePivot.setDownCommand());
@@ -125,6 +125,7 @@ public class RobotContainer {
     NamedCommands.registerCommand("INTAKE_START", intake.runOnce(intake::setIn));
     NamedCommands.registerCommand("INTAKE_STOP", intake.stopCommand());
     NamedCommands.registerCommand("AUTOAIM", m_swerveChassis.enableSpeedAlteratorCommand(lookTowards));
+    NamedCommands.registerCommand("STOP_ALTERATORS", m_swerveChassis.disableSpeedAlteratorCommand());
 
     // ! Speed alterators
     // this.m_speedAlterator_turn180 = new Turn180(m_odometry::getEstimatedPosition);
@@ -165,7 +166,7 @@ public class RobotContainer {
     SmartDashboard.putData("SwerveDrive/ResetHeadingWithVision", new ResetHeadingWithVision(m_gyro, Constants.Vision.Limelight3G_Front.kName));
 
     this.orchestra = new Orchestra();
-    
+
     shooter.configureOrchestra(orchestra);
     m_swerveChassis.configureOrchestra(orchestra);
 
@@ -181,8 +182,8 @@ public class RobotContainer {
         m_swerveChassis,
         () -> -DRIVER.getLeftY(),
         () -> -DRIVER.getLeftX(),
-        () -> DRIVER.getLeftTrigger() - DRIVER.getRightTrigger(),
-        () -> !DRIVER.rightBumper().getAsBoolean()
+        () ->  (DRIVER.getLeftTrigger() - DRIVER.getRightTrigger()),
+        () -> true // /!DRIVER.rightBumper().getAsBoolean()
       )
     );
 
@@ -192,6 +193,7 @@ public class RobotContainer {
     this.DRIVER.rightStickButton().onTrue(this.m_swerveChassis.zeroHeadingCommand());
 
     DRIVER.leftBumper().onTrue(m_swerveChassis.enableSpeedAlteratorCommand(lookTowards)).onFalse(m_swerveChassis.disableSpeedAlteratorCommand());
+    DRIVER.rightBumper().onTrue(m_swerveChassis.enableSpeedAlteratorCommand(trenchPass)).onFalse(m_swerveChassis.disableSpeedAlteratorCommand());
     DRIVER.rightButton().whileTrue(CompoundCommands.completeShootCommand(shooter, indexer, hopper, m_swerveChassis));
     // DRIVER.bottomButton().whileTrue(intake.setInCommand());
     // DRIVER.topButton().whileTrue(intake.setOutCommand());
@@ -209,7 +211,8 @@ public class RobotContainer {
 
     // ! OPERATOR
     OPERATOR.topButton().whileTrue(CompoundCommands.manualShootCommand(shooter, indexer, hopper, ShooterConstants.manual4));
-    OPERATOR.rightButton().whileTrue(CompoundCommands.manualShootCommand(shooter, indexer, hopper, ShooterConstants.manual2));
+    // OPERATOR.rightButton().whileTrue(CompoundCommands.manualShootCommand(shooter, indexer, hopper, ShooterConstants.manual2));
+    OPERATOR.rightButton().whileTrue(CompoundCommands.completeShootCommand(shooter, indexer, hopper, m_swerveChassis));
     OPERATOR.leftButton().whileTrue(CompoundCommands.manualShootCommand(shooter, indexer, hopper, ShooterConstants.manual3));
     OPERATOR.bottomButton().whileTrue(CompoundCommands.completeCalibrationCommand(shooter, indexer, hopper));
 
@@ -231,15 +234,15 @@ public class RobotContainer {
         )
       );
 
-    // OPERATOR.povLeft().whileTrue(indexer.indexCommand());
+    OPERATOR.povRight().whileTrue(indexer.indexCommand());
     // OPERATOR.povRight().whileTrue(hopper.hopperationCommand());
     OPERATOR.povLeft().onTrue(CompoundCommands.autoShootCommand(shooter, m_odometry::getEstimatedPosition, indexer, hopper, intake, intakePivot, m_swerveChassis));
     OPERATOR.povUp().whileTrue(indexer.ejectCommand().alongWith(hopper.reverseCommand()));
+    // DRIVER.povUp().whileTrue(indexer.ejectCommand().alongWith(hopper.reverseCommand()));
     OPERATOR.povDown().whileTrue(CompoundCommands.completeCalibrationCommand(shooter, indexer, hopper));
   }
 
   public Command getAutonomousCommand() {
-    // return new DriveSwerve(m_swerveChassis, () -> 0.2, () -> 0.0,() -> 0.0, () -> false).andThen(new WaitCommand(0.1)).andThen(m_swerveChassis.run(m_swerveChassis::stop)).andThen(CompoundCommands.manualShootCommand(shooter, indexer, hopper, ShooterConstants.manual1));
-    return m_autonomousChooser.getSelected();
+    return m_autonomousChooser.getSelected().finallyDo(m_swerveChassis::disableSpeedAlterator);
   }
 }

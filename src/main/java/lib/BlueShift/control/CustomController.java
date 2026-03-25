@@ -192,10 +192,10 @@ public class CustomController {
                 value = xboxController.getLeftTriggerAxis();
                 break;
             case PS4:
-                value = ps4Controller.getL2Axis();
+                value = (ps4Controller.getL2Axis() + 1);
                 break;
             case PS5:
-                value = ps5Controller.getL2Axis();
+                value = (ps5Controller.getL2Axis() + 1);
                 break;
             default:
                 throw new IllegalArgumentException("Invalid Controller Type");
@@ -216,10 +216,10 @@ public class CustomController {
                 value = xboxController.getRightTriggerAxis();
                 break;
             case PS4:
-                value = ps4Controller.getR2Axis();
+                value = (ps4Controller.getR2Axis() + 1) / 2;
                 break;
             case PS5:
-                value = ps5Controller.getR2Axis();
+                value = (ps5Controller.getR2Axis() + 1) / 2;
                 break;
             default:
                 throw new IllegalArgumentException("Invalid Controller Type");

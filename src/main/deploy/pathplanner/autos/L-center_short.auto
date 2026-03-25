@@ -33,6 +33,30 @@
           "data": {
             "name": "SHOOT"
           }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "STOP_ALTERATORS"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "INTAKE_DOWN"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "INTAKE_START"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Shoot-center_long"
+          }
         }
       ]
     }
